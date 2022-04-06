@@ -3,6 +3,7 @@
 #include "Fiber/FiberScheduler.h"
 #include "Semaphore.h"
 #include <assert.h>
+#include <iostream>
 
 
 static int32              counter(0);
@@ -138,6 +139,40 @@ void TestCase3(FiberScheduler* sche)
 	ASSERT(counter == 100000);
 }
 
+void TestFiber(FiberScheduler* sche)
+{
+	// post job to any thread
+	{
+		auto job1 = sche->PostJob([]() { printf("Run Job 1\n"); });
+		auto job2 = sche->PostJob([]() { printf("Run Job 2\n"); });
+		sche->YieldFor(job1->GetSignal());
+		sche->YieldFor(job2->GetSignal());
+	}
+
+	// post 100 job and wait for these jobs
+	{
+		auto signal = sche->FetchSignal();
+		for (int idx = 0; idx < 100; ++idx)
+		{
+			auto job = sche->PostJob([idx]() {
+				printf("Run Job %d/100\n", idx);
+			});
+			sche->AddPreCondition(signal, job->GetSignal());
+		}
+		sche->YieldFor(signal);
+	}
+
+	// post job to specify thread to avoid data race
+	{
+		auto job1 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
+		auto job2 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
+		auto job3 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
+		sche->YieldFor(job1->GetSignal());
+		sche->YieldFor(job2->GetSignal());
+		sche->YieldFor(job3->GetSignal());
+	}
+}
+
 int main(int, char* [])
 {
 	auto scheduler = new FiberScheduler;
@@ -145,6 +180,7 @@ int main(int, char* [])
 
 	Semaphore semaphore;
 	scheduler->PostJob([&]() {
+		//TestFiber(scheduler);
 		TestCase1(scheduler);
 		TestCase2(scheduler);
 		TestCase3(scheduler);
