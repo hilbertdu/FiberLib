@@ -31,12 +31,9 @@ void TestFiber(FiberScheduler* sche)
 
        // post job to specify thread to avoid data race
        {
-              auto job1 = sche->PostJob([]() { printf("Run Job on main\n"); }, 
-ThreadWorkerFilter::E_WORKER_ON_MAIN);
-              auto job2 = sche->PostJob([]() { printf("Run Job on main\n"); }, 
-ThreadWorkerFilter::E_WORKER_ON_MAIN);
-              auto job3 = sche->PostJob([]() { printf("Run Job on main\n"); }, 
-ThreadWorkerFilter::E_WORKER_ON_MAIN);
+              auto job1 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
+              auto job2 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
+              auto job3 = sche->PostJob([]() { printf("Run Job on main\n"); }, ThreadWorkerFilter::E_WORKER_ON_MAIN);
               sche->YieldFor(job1->GetSignal());
               sche->YieldFor(job2->GetSignal());
               sche->YieldFor(job3->GetSignal());
